@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const customError = require('./customError');
 const app = express();
 
 app.use(cors());
@@ -34,15 +35,18 @@ mongoose.connection.on('disconnected', () => {
 
 connectToMongoDB();
 
-// Generic handling and error handling
-const handleError = (err, res, msg = "Error") => {
-    console.error(err);
-    res.status(400).json({ [msg]: err.message });
-  };
+// Route: Users
+const userRoutes = require('./routers/users/users.controller');
+app.use('/api/v1/users', userRoutes);
 
-const handleSuccess = (data, res) => res.status(200).json(data);
+// Global error handling
+app.use((err, req, res, next) => {
+  if(err instanceof customError){
+    return res.status(err.statusCode).json({error: err.message});
+  }
+})
 
-// Add a status check route
+// Route: status check
 app.get('/status', (req, res) => {
   const mongooseState = mongoose.connection.readyState;
   const statusMap = {
@@ -58,9 +62,7 @@ app.get('/status', (req, res) => {
 });
 
 // start the server
-const travellerServer = express.Router();
-app.use(travellerServer);
-
-app.listen(process.env.PORT, () => {
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
   console.log(`Traveller Server is running on ${process.env.PORT} ...`);
 });
