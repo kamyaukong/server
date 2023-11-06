@@ -51,7 +51,7 @@ router.post('/', validateUserData, async (req, res, next) => {
 router.put('/:id', validateUserData, async (req, res, next) => {
     try{
         const userID = req.params.id;
-        delete req.body.userID;     //userID cannot make change
+        delete req.body.userID;     //delete field userID from body to ensure userID cannot make change
         const updatedUser = await User.findByIdAndUpdate(userID, req.body, { new: true });
         if(!updatedUser) {
             return next(new customError(404, 'User not found'));
@@ -62,19 +62,24 @@ router.put('/:id', validateUserData, async (req, res, next) => {
     }
 });
 
-// Delete one user record by record ID
+// Delete one user record by field UserID instead of record object ID
 router.delete('/:userID', async (req, res, next) => {
     console.log("Attempting to delete user:", req.params.userID);
-    const userID = req.params.userID;
-    try {
-        const user = await User.findByIdAndDelete({userID: userID});
-        if (!user) {
-            return next(new customError(404, 'User ' + userID + 'not found.'));
+    const existUser = await User.findOne({ userID: req.params.userID });
+    if(existUser){
+        const objID = existUser.id;
+        console.log('Object ID found:', objID);
+        try {
+            const user = await User.findByIdAndDelete(objID);
+            if (!user) {
+                return next(new customError(404, 'User obj ' + objID + 'not found.'));
+            }
+            res.status(200).json({ message: 'User ' + existUser + ' has been deleted.' });
+        } catch (err) {
+            next(new customError(500, err));
         }
-        res.status(200).json({ message: 'User ' + userID + ' has been deleted.' });
-    } catch (err) {
-        //next(new customError(500, 'An error occurred while deleting the user:' + userID));
-        next(new customError(500, err));
+    } else {
+        return next(new customError(404, 'User ' + existUser + 'not found.'));
     }
 });
 
