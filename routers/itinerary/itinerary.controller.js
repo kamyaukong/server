@@ -1,5 +1,6 @@
 const express = require('express');
 const Itinerary = require('./itinerary.model');
+const CustomError = require('../../customError');
 const router = express.Router();
 
 // Middleware to validate mandatory fields
@@ -12,11 +13,12 @@ const validateItinerary = (req, res, next) => {
 router.post('/', validateItinerary, async (req, res, next) => {
     try {
         const newItinerary = new Itinerary(req.body);
-        await newItinerary.save();
-        res.status(201).json(newItinerary);
-    } catch (err) {
-        next(err);
-    }
+        await newItinerary.save()
+            .then(itinerary => res.json(itinerary))
+            .catch(err => next(new CustomError(400, 'Save Error: ' + err)));
+        } catch (err) {
+            next(new CustomError(500, "Create itinerary error" + err.message));
+        }
 });
 
 // GET /api/v1/itinerary - display everything
