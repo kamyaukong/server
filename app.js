@@ -35,9 +35,9 @@ mongoose.connection.on('disconnected', () => {
 
 connectToMongoDB();
 
-// Route: Users
-const userRoutes = require('./routers/users/users.controller');
-app.use('/api/v1/users', userRoutes);
+// Route: Users, Itinerary
+app.use('/api/v1/users', require('./routers/users/users.controller'));
+app.use('/api/v1/itinerary', require('./routers/itinerary/itinerary.controller'));
 
 // Global error handling
 app.use((err, req, res, next) => {
