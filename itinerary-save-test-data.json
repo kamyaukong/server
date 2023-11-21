@@ -1,0 +1,29 @@
+{
+  "name": "Summer Vacation 2023",
+  "startDate": "2023-07-01",
+  "endDate": "2023-07-15",
+  "adults": 2,
+  "children": 1,
+  "budget": 6000,
+  "userID": "kam",
+  "flights": [
+    {
+      "airline": "Air Canada",
+      "flightNumber": "AC123",
+      "departureDate": "2023-07-01",
+      "departureTime": "10:00",
+      "confirmationNumber": "CONF12345",
+      "price": 450.00,
+      "notes": "First leg of the journey"
+    },
+    {
+      "airline": "WestJet",
+      "flightNumber": "WJ678",
+      "departureDate": "2023-07-15",
+      "departureTime": "15:30",
+      "confirmationNumber": "CONF67890",
+      "price": 500.00,
+      "notes": "Return flight"
+    }
+  ]
+}
