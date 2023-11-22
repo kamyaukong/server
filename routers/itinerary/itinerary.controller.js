@@ -14,7 +14,6 @@ router.post('/', validateItinerary, async (req, res, next) => {
     // console.log('Create document: ', req.body);
 
     try {
-    
         const { items, ...mainDetails } = req.body;
         const { flights, hotels, activities } = splitItineraryItems(items);
 
@@ -26,13 +25,13 @@ router.post('/', validateItinerary, async (req, res, next) => {
         };
 
         const newItinerary = new Itinerary(newItineraryData);
-        console.log('New itinerary: ', newItinerary);
+        //console.log('New itinerary: ', newItinerary);
         await newItinerary.save()
             .then(itinerary => res.json(itinerary))
-            .catch(err => next(new CustomError(400, 'Save Error: ' + err)));
-        } catch (err) {
-            next(new CustomError(500, 'Itinerary creation error' + err.message));
-        }
+            .catch(err => next(new CustomError(400, 'Itinerary creation error' + err.message)));
+    } catch (err) {
+        next(new CustomError(500, 'Itinerary creation error' + err.message));
+    }
 });
 
 // GET /api/v1/itinerary - display everything
@@ -46,8 +45,36 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
     try {
         const itinerary = await Itinerary.findById(req.params.id);
-        if (!itinerary) return res.status(404).send('Itinerary not found');
-        res.json(itinerary);
+        if (!itinerary) return res.status(404).send('Itinerary not found: ' + req.params.id);
+
+        // Extract main itinerary details
+        const mainDetails = {
+            _id: itinerary._id,
+            name: itinerary.name,
+            startDate: itinerary.startDate,
+            endDate: itinerary.endDate,
+            adults: itinerary.adults,
+            children: itinerary.children,
+            budget: itinerary.budget,
+            userID: itinerary.userID
+        };
+
+        let combinedItems = [];
+
+        // Combine and add a uniform 'sortDate' to each item
+        if (itinerary.flights) {
+            combinedItems = combinedItems.concat(itinerary.flights.map(item => ({ ...item.toObject(), type: 'flight', sortDate: item.departureDate })));
+        }
+        if (itinerary.hotels) {
+            combinedItems = combinedItems.concat(itinerary.hotels.map(item => ({ ...item.toObject(), type: 'hotel', sortDate: item.checkInDate })));
+        }
+        if (itinerary.activities) {
+            combinedItems = combinedItems.concat(itinerary.activities.map(item => ({ ...item.toObject(), type: 'activity', sortDate: item.activityDate })));
+        }
+
+        // Sort combined items by 'sortDate'
+        combinedItems.sort((a, b) => new Date(a.sortDate) - new Date(b.sortDate));
+        res.json({ mainDetails, items: combinedItems });
     } catch (err) {
         next(err);
     }
@@ -56,11 +83,25 @@ router.get('/:id', async (req, res, next) => {
 // PUT /api/v1/itinerary/:id - update particular itinerary by ID
 router.put('/:id', validateItinerary, async (req, res, next) => {
     try {
-        const updatedItinerary = await Itinerary.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedItinerary) return res.status(404).send('Itinerary not found');
-        res.json(updatedItinerary);
+        // console.log('Update document: ', req.body);
+    
+        // Destructure the incoming data
+        const { items, ...mainDetails } = req.body;
+        const { flights, hotels, activities } = splitItineraryItems(items);
+
+        const updateData = {
+            ...mainDetails,
+            flights,
+            hotels,
+            activities
+        };
+        const updatedItinerary = await Itinerary.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true });
+        if (!updatedItinerary) 
+            { return res.status(404).send('Itinerary not found'); }
+        else
+            { res.json(updatedItinerary); }
     } catch (err) {
-        next(err);
+        next(new CustomError(500, 'Itinerary creation error' + err.message));
     }
 });
 
