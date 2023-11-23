@@ -6,7 +6,13 @@ const mongoose = require('mongoose');
 const customError = require('./customError');
 const app = express();
 
-app.use(cors());
+
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+  optionsSuccessStatus: 200 // For legacy browser support
+};
+
+app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
 // Connect DB
