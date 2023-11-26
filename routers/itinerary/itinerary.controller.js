@@ -1,6 +1,7 @@
 const express = require('express');
 const Itinerary = require('./itinerary.model');
 const CustomError = require('../../customError');
+const verifyToken = require('../middleware/verifyToken');
 const router = express.Router();
 
 // Middleware to validate mandatory fields
@@ -10,8 +11,7 @@ const validateItinerary = (req, res, next) => {
 };
 
 // POST /api/v1/itinerary - create itinerary
-router.post('/', validateItinerary, async (req, res, next) => {
-    // console.log('Create document: ', req.body);
+router.post('/', verifyToken, validateItinerary, async (req, res, next) => {
 
     try {
         const { items, ...mainDetails } = req.body;
@@ -25,25 +25,19 @@ router.post('/', validateItinerary, async (req, res, next) => {
         };
 
         const newItinerary = new Itinerary(newItineraryData);
-        //console.log('New itinerary: ', newItinerary);
+        console.log('New itinerary: ', newItinerary);
         await newItinerary.save()
             .then(itinerary => res.json(itinerary))
-            .catch(err => next(new CustomError(400, 'Itinerary creation error' + err.message)));
+            .catch(err => next(new CustomError(400, 'Itinerary creation error: ' + err.message)));
     } catch (err) {
-        next(new CustomError(500, 'Itinerary creation error' + err.message));
+        next(new CustomError(500, 'Itinerary creation error: ' + err.message));
     }
 });
 
-// GET /api/v1/itinerary - display everything
-router.get('/', async (req, res, next) => {
-    Itinerary.find()
-        .then(itineraries => res.json(itineraries))
-        .catch(err => next(new CustomError(400, err.message)));
-});
-
 // GET /api/v1/itinerary/:id - display particular itinerary by ID
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', verifyToken, async (req, res, next) => {
     try {
+        console.log('Get itinerary by ID: ', req.params.id);
         const itinerary = await Itinerary.findById(req.params.id);
         if (!itinerary) return res.status(404).send('Itinerary not found: ' + req.params.id);
 
@@ -80,8 +74,17 @@ router.get('/:id', async (req, res, next) => {
     }
 });
 
+// GET /api/v1/itinerary/user - retrieve itinerary for specific user
+router.get('/user/:userID', verifyToken, async (req, res, next) => {
+    const userID = req.params.userID;
+    console.log('Get itinerary by userID: ', userID);
+    Itinerary.find({ userID: userID })
+        .then(itineraries => res.json(itineraries))
+        .catch(err => next(new CustomError(400, err.message)));
+});
+
 // PUT /api/v1/itinerary/:id - update particular itinerary by ID
-router.put('/:id', validateItinerary, async (req, res, next) => {
+router.put('/:id', verifyToken, validateItinerary, async (req, res, next) => {
     try {
         // console.log('Update document: ', req.body);
     
@@ -106,7 +109,7 @@ router.put('/:id', validateItinerary, async (req, res, next) => {
 });
 
 // DELETE /api/v1/itinerary/:id - delete particular itinerary by ID
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', verifyToken, async (req, res, next) => {
     try {
         const itinerary = await Itinerary.findByIdAndDelete(req.params.id);
         if (!itinerary) {

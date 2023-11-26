@@ -6,7 +6,6 @@ const mongoose = require('mongoose');
 const customError = require('./customError');
 const app = express();
 
-
 const corsOptions = {
   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   optionsSuccessStatus: 200 // For legacy browser support
