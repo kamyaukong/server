@@ -26,8 +26,8 @@ router.post('/logon/', async (req, res, next) => {
         if(!user) {
             return next(new customError(401, 'Authentication failure. User not found.'));
         } else {
-            console.log('User: ', user)
-            console.log('Password: ', password);
+            // console.log('User: ', user)
+            // console.log('Password: ', password);
             if(user.password === password) {
                 // Create JWT token
                 const token = jwt.sign({ userID }, process.env.SECRET, { expiresIn: process.env.EXPIRATION });

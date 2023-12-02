@@ -37,7 +37,7 @@ router.post('/', verifyToken, validateItinerary, async (req, res, next) => {
 // GET /api/v1/itinerary/:id - display particular itinerary by ID
 router.get('/:id', verifyToken, async (req, res, next) => {
     try {
-        console.log('Get itinerary by ID: ', req.params.id);
+        // console.log('Get itinerary by ID: ', req.params.id);
         const itinerary = await Itinerary.findById(req.params.id);
         if (!itinerary) return res.status(404).send('Itinerary not found: ' + req.params.id);
 
@@ -74,6 +74,40 @@ router.get('/:id', verifyToken, async (req, res, next) => {
     }
 });
 
+// DELETE /api/v1/itinerary/:id/item/:itemType/:itemId - delete a specific item from an itinerary
+router.delete('/:id/item/:itemType/:itemId', verifyToken, async (req, res, next) => {
+    console.log('Delete item from itinerary: ', req.params);
+    // try {
+        const { id, itemType, itemId } = req.params;
+        const itinerary = await Itinerary.findById(id);
+
+        if (!itinerary) {
+            return res.status(404).send('Itinerary not found');
+        }
+
+        const itemTypeMap = {
+            flight: 'flights',
+            hotel: 'hotels',
+            activity: 'activities'
+        };
+
+        const pluralItemType = itemTypeMap[itemType];
+        console.log('Plural item type: ', pluralItemType);
+        // Check the itemType and filter the corresponding array
+        if (itinerary[pluralItemType]) {
+            console.log('Delete item from itinerary: ', pluralItemType, itemId);
+            itinerary[pluralItemType] = itinerary[pluralItemType].filter(item => item._id.toString() !== itemId);
+        } else {
+            return res.status(400).send('Invalid item type');
+        }
+
+        await itinerary.save();
+        res.status(200).send(`${itemType.slice(0, -1)} with ID ${itemId} has been deleted from itinerary ${id}`);
+    // } catch (err) {
+    //    next(new CustomError(500, 'Error deleting item: ' + err.message));
+    //}
+});
+
 // GET /api/v1/itinerary/user - retrieve itinerary for specific user
 router.get('/user/:userID', verifyToken, async (req, res, next) => {
     const userID = req.params.userID;
@@ -86,8 +120,6 @@ router.get('/user/:userID', verifyToken, async (req, res, next) => {
 // PUT /api/v1/itinerary/:id - update particular itinerary by ID
 router.put('/:id', verifyToken, validateItinerary, async (req, res, next) => {
     try {
-        // console.log('Update document: ', req.body);
-    
         // Destructure the incoming data
         const { items, ...mainDetails } = req.body;
         const { flights, hotels, activities } = splitItineraryItems(items);
@@ -120,6 +152,27 @@ router.delete('/:id', verifyToken, async (req, res, next) => {
         next(new CustomError(500, 'Itinerary deletion error: ' + err.message));
     }
 });
+
+// DELETE /api/v1/itinerary/:id/flight/:flightId - delete a flight from an itinerary
+/*
+router.delete('/:id/flight/:flightId', verifyToken, async (req, res, next) => {
+    try {
+        const { id, flightId } = req.params;
+        const itinerary = await Itinerary.findById(id);
+        if (!itinerary) {
+            return res.status(404).send('Itinerary not found');
+        }
+
+        // Remove the flight from the flights array
+        itinerary.flights = itinerary.flights.filter(flight => flight._id.toString() !== flightId);
+
+        await itinerary.save();
+        res.status(200).send(`Flight ${flightId} has been deleted from itinerary ${id}`);
+    } catch (err) {
+        next(new CustomError(500, 'Error deleting flight: ' + err.message));
+    }
+});
+*/
 
 // Speical Logic to split combined items array into separate arrays categorised by type: flight, hotel, activity
 function splitItineraryItems(items) {

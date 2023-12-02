@@ -10,6 +10,7 @@ let ItinerarySchema = new Schema({
     budget: { type: Number, required: true },
     userID: { type: String, required: true }, // assuming reference to Users model
     flights: [{
+        _id: { type: Schema.Types.ObjectId, auto: true },
         airline: String,
         flightNumber: String,
         departureDate: Date,
@@ -19,6 +20,7 @@ let ItinerarySchema = new Schema({
         notes: String
     }],
     hotels: [{
+        _id: { type: Schema.Types.ObjectId, auto: true },
         name: String,
         addressLine1: String,
         phone: String,
@@ -29,6 +31,7 @@ let ItinerarySchema = new Schema({
         notes: String
     }],
     activities: [{
+        _id: { type: Schema.Types.ObjectId, auto: true },
         name: String,
         addressLine1: String,
         addressLine2: String,
